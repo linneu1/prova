@@ -10,36 +10,63 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 0;
-      padding: 20px;
+      padding: 15px;
     }
 
     .container {
       background: #ffffff;
-      padding: 30px;
+      padding: 25px;
       border-radius: 16px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
       width: 100%;
       max-width: 500px;
       text-align: center;
+      position: relative;
+    }
+
+    /* Botão de Tela Cheia */
+    .fullscreen-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+
+    .fullscreen-btn:hover {
+      background: #e0e0e0;
     }
 
     h1 {
       color: #333;
+      margin-top: 10px;
       margin-bottom: 10px;
+      font-size: 24px;
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
 
-    /* Tela de Início */
+    /* Botões Gerais */
     .start-btn, .next-btn, .restart-btn {
       background-color: #4caf50;
       color: white;
@@ -63,9 +90,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       font-weight: bold;
       color: #555;
+      padding-top: 20px;
     }
 
     .timer-bar {
@@ -85,11 +113,11 @@
     }
 
     .question-box {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 600;
       color: #2c3e50;
-      margin-bottom: 25px;
-      min-height: 60px;
+      margin-bottom: 20px;
+      min-height: 50px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -99,13 +127,13 @@
     .options-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .option-btn {
       background-color: #f8f9fa;
       border: 2px solid #e9ecef;
-      padding: 12px 20px;
+      padding: 12px 18px;
       border-radius: 8px;
       font-size: 16px;
       font-weight: 600;
@@ -137,19 +165,19 @@
 
     /* Resultado Final */
     .score-title {
-      font-size: 24px;
-      margin-bottom: 15px;
+      font-size: 22px;
+      margin-bottom: 10px;
     }
 
     .score-grade {
-      font-size: 48px;
+      font-size: 44px;
       font-weight: bold;
       color: #667eea;
       margin: 10px 0;
     }
 
     .feedback-msg {
-      font-size: 18px;
+      font-size: 17px;
       color: #666;
       margin-bottom: 20px;
     }
@@ -157,7 +185,10 @@
 </head>
 <body>
 
-  <div class="container">
+  <div class="container" id="game-container">
+    <!-- Botão de Tela Cheia Integrado -->
+    <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Expandir Tela Cheia">⛶ Tela Cheia</button>
+
     <!-- Tela Inicial -->
     <div id="start-screen">
       <h1>Hora da Prova! 📝</h1>
@@ -179,7 +210,7 @@
       <div id="question" class="question-box">Pergunta aqui...</div>
 
       <div class="options-list" id="options">
-        <!-- Alternativas serão inseridas dinamicamente -->
+        <!-- Alternativas dinâmicas -->
       </div>
     </div>
 
@@ -229,22 +260,21 @@
         ]
       },
       {
-        question: "Qual sílaba completa: cora__ão",
+        question: "Qual letra/letra especial falta: cora__ão",
         options: [
-          { label: "A", text: "ÇÃ", correct: false },
-          { label: "B", text: "ÇO", correct: true },
-          { label: "C", text: "SU", correct: false }
+          { label: "A", text: "Ç", correct: true },
+          { label: "B", text: "C", correct: false },
+          { label: "C", text: "S", correct: false }
         ]
       }
     ];
 
-    const TIME_LIMIT = 15; // Segundos por questão
+    const TIME_LIMIT = 15;
     let currentQuestionIndex = 0;
     let score = 0;
     let timer;
     let timeLeft = TIME_LIMIT;
 
-    // Elementos DOM
     const startScreen = document.getElementById('start-screen');
     const quizScreen = document.getElementById('quiz-screen');
     const resultScreen = document.getElementById('result-screen');
@@ -311,7 +341,6 @@
     }
 
     function handleTimeout() {
-      // Bloqueia botões e destaca a certa
       Array.from(optionsElement.children).forEach(button => {
         button.disabled = true;
         if (button.dataset.correct === "true") {
@@ -329,10 +358,9 @@
 
       if (isCorrect) {
         selectedButton.classList.add('correct');
-        score += 2; // Cada questão vale 2 pontos
+        score += 2;
       } else {
         selectedButton.classList.add('wrong');
-        // Revela a correta
         Array.from(optionsElement.children).forEach(button => {
           if (button.dataset.correct === "true") {
             button.classList.add('correct');
@@ -375,6 +403,18 @@
 
     function restartQuiz() {
       startQuiz();
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          alert(`Erro ao tentar ativar tela cheia: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
     }
   </script>
 </body>
