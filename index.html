@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo da Prova School Quiz</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Tela de Início */
+    .start-btn, .next-btn, .restart-btn {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    .start-btn:hover, .next-btn:hover, .restart-btn:hover {
+      background-color: #45a049;
+    }
+
+    /* Topo do Quiz */
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .timer-bar {
+      width: 100%;
+      background-color: #eee;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .timer-progress {
+      height: 100%;
+      width: 100%;
+      background-color: #ff9800;
+      transition: width 1s linear;
+    }
+
+    .question-box {
+      font-size: 22px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 25px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Alternativas */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-btn {
+      background-color: #f8f9fa;
+      border: 2px solid #e9ecef;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-btn:hover:not([disabled]) {
+      background-color: #e2e6ea;
+      border-color: #dae0e5;
+    }
+
+    .option-btn.correct {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+
+    .option-btn.wrong {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    /* Resultado Final */
+    .score-title {
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+
+    .score-grade {
+      font-size: 48px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .feedback-msg {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Tela Inicial -->
+    <div id="start-screen">
+      <h1>Hora da Prova! 📝</h1>
+      <p>A prova contém 5 questões. Cada uma vale 2 pontos.<br>Você terá 15 segundos para cada questão.</p>
+      <button class="start-btn" onclick="startQuiz()">Iniciar Prova</button>
+    </div>
+
+    <!-- Tela da Prova -->
+    <div id="quiz-screen" class="hidden">
+      <div class="quiz-header">
+        <span id="question-count">Questão 1/5</span>
+        <span id="timer-text">⏱️ 15s</span>
+      </div>
+
+      <div class="timer-bar">
+        <div id="timer-progress" class="timer-progress"></div>
+      </div>
+
+      <div id="question" class="question-box">Pergunta aqui...</div>
+
+      <div class="options-list" id="options">
+        <!-- Alternativas serão inseridas dinamicamente -->
+      </div>
+    </div>
+
+    <!-- Tela de Resultados -->
+    <div id="result-screen" class="hidden">
+      <h1>Resultado Final 🎉</h1>
+      <div class="score-title">Sua Nota:</div>
+      <div id="final-grade" class="score-grade">10 / 10</div>
+      <p id="correct-count">Você acertou 5 de 5 questões.</p>
+      <div id="feedback" class="feedback-msg">Excelente trabalho!</div>
+      <button class="restart-btn" onclick="restartQuiz()">Tentar Novamente</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Qual sílaba falta: came__",
+        options: [
+          { label: "A", text: "LO", correct: true },
+          { label: "B", text: "CO", correct: false },
+          { label: "C", text: "LA", correct: false }
+        ]
+      },
+      {
+        question: "Quanto é 7 + 8?",
+        options: [
+          { label: "A", text: "13", correct: false },
+          { label: "B", text: "15", correct: true },
+          { label: "C", text: "16", correct: false }
+        ]
+      },
+      {
+        question: "Qual sílaba completa a palavra: bo__ca",
+        options: [
+          { label: "A", text: "TE", correct: false },
+          { label: "B", text: "TA", correct: false },
+          { label: "C", text: "NE", correct: true }
+        ]
+      },
+      {
+        question: "Quanto é 5 × 4?",
+        options: [
+          { label: "A", text: "20", correct: true },
+          { label: "B", text: "24", correct: false },
+          { label: "C", text: "18", correct: false }
+        ]
+      },
+      {
+        question: "Qual sílaba completa: cora__ão",
+        options: [
+          { label: "A", text: "ÇÃ", correct: false },
+          { label: "B", text: "ÇO", correct: true },
+          { label: "C", text: "SU", correct: false }
+        ]
+      }
+    ];
+
+    const TIME_LIMIT = 15; // Segundos por questão
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = TIME_LIMIT;
+
+    // Elementos DOM
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const questionElement = document.getElementById('question');
+    const optionsElement = document.getElementById('options');
+    const questionCountElement = document.getElementById('question-count');
+    const timerTextElement = document.getElementById('timer-text');
+    const timerProgressElement = document.getElementById('timer-progress');
+    const finalGradeElement = document.getElementById('final-grade');
+    const correctCountElement = document.getElementById('correct-count');
+    const feedbackElement = document.getElementById('feedback');
+
+    function startQuiz() {
+      startScreen.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      quizScreen.classList.remove('hidden');
+      
+      currentQuestionIndex = 0;
+      score = 0;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      resetState();
+      const currentQuestion = questions[currentQuestionIndex];
+      
+      questionCountElement.innerText = `Questão ${currentQuestionIndex + 1}/${questions.length}`;
+      questionElement.innerText = currentQuestion.question;
+
+      currentQuestion.options.forEach(option => {
+        const button = document.createElement('button');
+        button.innerText = `${option.label}) ${option.text}`;
+        button.classList.add('option-btn');
+        if (option.correct) {
+          button.dataset.correct = option.correct;
+        }
+        button.addEventListener('click', selectOption);
+        optionsElement.appendChild(button);
+      });
+
+      startTimer();
+    }
+
+    function resetState() {
+      clearInterval(timer);
+      timeLeft = TIME_LIMIT;
+      timerTextElement.innerText = `⏱️ ${timeLeft}s`;
+      timerProgressElement.style.width = '100%';
+      optionsElement.innerHTML = '';
+    }
+
+    function startTimer() {
+      timer = setInterval(() => {
+        timeLeft--;
+        timerTextElement.innerText = `⏱️ ${timeLeft}s`;
+        const percentage = (timeLeft / TIME_LIMIT) * 100;
+        timerProgressElement.style.width = `${percentage}%`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function handleTimeout() {
+      // Bloqueia botões e destaca a certa
+      Array.from(optionsElement.children).forEach(button => {
+        button.disabled = true;
+        if (button.dataset.correct === "true") {
+          button.classList.add('correct');
+        }
+      });
+
+      setTimeout(nextQuestion, 1500);
+    }
+
+    function selectOption(e) {
+      clearInterval(timer);
+      const selectedButton = e.target;
+      const isCorrect = selectedButton.dataset.correct === "true";
+
+      if (isCorrect) {
+        selectedButton.classList.add('correct');
+        score += 2; // Cada questão vale 2 pontos
+      } else {
+        selectedButton.classList.add('wrong');
+        // Revela a correta
+        Array.from(optionsElement.children).forEach(button => {
+          if (button.dataset.correct === "true") {
+            button.classList.add('correct');
+          }
+        });
+      }
+
+      Array.from(optionsElement.children).forEach(button => {
+        button.disabled = true;
+      });
+
+      setTimeout(nextQuestion, 1500);
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < questions.length) {
+        showQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      quizScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+
+      const correctAnswers = score / 2;
+      finalGradeElement.innerText = `${score} / 10`;
+      correctCountElement.innerText = `Você acertou ${correctAnswers} de ${questions.length} questões.`;
+
+      if (score === 10) {
+        feedbackElement.innerText = "Parabéns! Nota máxima! 🌟";
+      } else if (score >= 6) {
+        feedbackElement.innerText = "Muito bem! Você passou na prova! 👍";
+      } else {
+        feedbackElement.innerText = "Precisa estudar mais um pouquinho. Tente de novo! 📚";
+      }
+    }
+
+    function restartQuiz() {
+      startQuiz();
+    }
+  </script>
+</body>
+</html>
